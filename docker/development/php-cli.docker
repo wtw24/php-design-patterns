@@ -1,0 +1,14 @@
+FROM php:7.3-cli
+
+RUN apt-get update && apt-get install -y \
+    git \
+    libpq-dev \
+    zlib1g-dev zip \
+    libzip-dev \
+    && docker-php-ext-install zip
+
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/bin --filename=composer --quiet
+
+ENV COMPOSER_ALLOW_SUPERUSER 1
+
+WORKDIR /var/www

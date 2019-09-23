@@ -1,0 +1,68 @@
+FROM php:7-apache
+
+ARG WITH_XDEBUG=false
+
+# Common
+RUN apt-get update \
+	&& apt-get install -y \
+        wget \
+        curl \
+        iputils-ping \
+		openssl \
+		gnupg2 \
+        gettext \
+        locales \
+        locales-all \
+        libxslt-dev \
+        libfreetype6-dev \
+        libjpeg62-turbo-dev \
+        libpng-dev \
+        libgd-dev \
+        libicu-dev g++ \
+    && docker-php-ext-install intl \
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install -j$(nproc) \
+        dom \
+        xmlrpc \
+        xsl \
+        mysqli \
+        pdo \
+        pdo_mysql \
+        gettext \
+        mbstring \
+        soap \
+        sockets \
+    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
+    && docker-php-ext-install -j$(nproc) \
+        gd \
+        exif
+
+RUN if [ $WITH_XDEBUG = "true" ] ; then \
+        pecl install xdebug; \
+        docker-php-ext-enable xdebug; \
+        echo "xdebug.profiler_enable=0" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini; \
+    fi ;
+
+# Clean
+RUN apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/*
+
+ADD ./docker/test/php-apache/php.ini /usr/local/etc/php/php.ini
+ADD ./docker/test/php-apache/sites-available /etc/apache2/sites-available
+
+ADD ./src /var/www
+
+RUN usermod --non-unique --uid 1000 www-data \
+    && groupmod --non-unique --gid 1000 www-data \
+    && chown -R www-data:www-data /var/www \
+    && mkdir -p /log/myService; chown -R www-data:www-data /log/myService
+
+# Set working directory
+WORKDIR /var/www
+
+EXPOSE 443
+
+# Apache modules
+RUN a2enmod rewrite \
+    && a2enmod headers \
+    && a2enmod ssl

@@ -1,0 +1,32 @@
+version: "3"
+
+networks:
+  default:
+    external:
+      name: backend
+
+services:
+  php-cli:
+    build:
+      context: ./docker/development
+      dockerfile: php-cli.docker
+    volumes:
+      - ./src:/var/www
+
+  php-fpm:
+    build:
+      context: ./docker/development
+      dockerfile: php-fpm.docker
+    volumes:
+      - ./src:/var/www
+
+  nginx:
+    build:
+      context: ./docker/development
+      dockerfile: nginx.docker
+    volumes:
+      - ./src:/var/www
+    depends_on:
+      - php-fpm
+    ports:
+      - "10080:80"

@@ -1,0 +1,6 @@
+.env
+.env-make
+.env-production
+.env-test
+src/composer.lock
+src/vendor
